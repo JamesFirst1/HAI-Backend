@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: heart-voice-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=Heart Voice Backend
+      - APP_VERSION=1.0.0
+      - DEBUG=false
+      - DATABASE_URL=sqlite:///./data/database/heartvoice.db
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-super-secret-jwt-key}
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - UPLOAD_DIR=./data/uploads
+      - MAX_UPLOAD_SIZE=5242880
+      - CORS_ORIGINS=["http://localhost:3000","http://localhost:8080"]
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      # 开发时取消注释以下行以热重载代码
+      # - ./app:/app/app
+      # - ./requirements.txt:/app/requirements.txt
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - heart-voice-network
+
+  # PostgreSQL数据库（可选，替换SQLite）
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: heart-voice-db
+  #   environment:
+  #     - POSTGRES_USER=heartvoice
+  #     - POSTGRES_PASSWORD=heartvoice123
+  #     - POSTGRES_DB=heartvoice
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - heart-voice-network
+
+  # pgAdmin（数据库管理工具，可选）
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   container_name: heart-voice-pgadmin
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=admin@heartvoice.com
+  #     - PGADMIN_DEFAULT_PASSWORD=admin123
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     - postgres
+  #   networks:
+  #     - heart-voice-network
+
+# 数据卷定义
+volumes:
+  postgres_data:
+    driver: local
+
+# 网络定义
+networks:
+  heart-voice-network:
+    driver: bridge
